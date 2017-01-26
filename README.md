@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 SeedSQrrL: A new tool for mitochondrial Genome Reconstruction in Non-Model Organisms
 
 The tool consists of three programs: 1) MitoDBMaker, and 2) MitoDBRelativeMaker, and 3) MitoDBExtractor. They are to be run in that order. The first program creates an SQLite database, populates it with the gene sequence and metadata (from the NCBI nucleotide database) for a list of organisms that you provide then generates a list of unmatched genes for those organisms. If a list of genes is not provided via command line, the default list is used. The next program will find relatives for the resulting list of unmatched genes using the NCBI Taxonomy DB as a guide and then populate the database with the genes for those relatives. The final program extracts those genes into individual files to be run with mitobim. From there, the genes are extended using mitobim and contigs can be placed together (e.g. using Geneious).
@@ -57,3 +58,6 @@ gene_synonym = ["Mitochondrially Encoded NADH:Ubiquinone Oxidoreductase Core Sub
 
 Notes on improvements:
 Want to run select genes at a time, select the highest rank, and error with mira.
+=======
+# SeedSQrrL
+>>>>>>> 5e98bdc8bb1f1cae1839e904c133dfc0332c0fb2
