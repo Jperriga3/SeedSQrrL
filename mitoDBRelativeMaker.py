@@ -23,7 +23,7 @@ def get_ids(rank_value, gene):
     #############################################################
     # get the GenBank accession number via esearch, ex 256557273
     #############################################################
-    # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=Atractaspis+bibronii+CO1
+    # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=Atractaspis+bibronii+COX1
     # Note: check that if subspecies isn't found, still finds species
 
     url = '/entrez/eutils/esearch.fcgi?db=nuccore&term=' + rank_value + '+' + gene
@@ -134,8 +134,8 @@ def get_gene_from_xml(fasta_soup, gene, db_connection):  # fasta_Soup is an obje
     # so must use exact match for longer words
     # Lists originally taken from http://www.genecards.org/ which has multiple sources including HUGO
     gene_synonym = None
-    if gene =="CO1":
-        gene_synonym = ["COX1", "COI", "COXI", "Cytochrome C Oxidase I",
+    if gene =="COX1":
+        gene_synonym = ["CO1", "COI", "COXI", "Cytochrome C Oxidase I",
         "Cytochrome C Oxidase Subunit I", "MTCO1",
         "Mitochondrially Encoded Cytochrome C Oxidase I",
         "Cytochrome C Oxidase Polypeptide I", "EC 1.9.3.1"]

@@ -48,7 +48,7 @@ def get_ids(genus, species, subspecies, gene_or_genome):
     #############################################################
     # get the GenBank accession number via esearch, ex 256557273
     #############################################################
-    # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=Atractaspis+bibronii+CO1
+    # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=Atractaspis+bibronii+COX1
     # Note: check that if subspecies isn't found, still finds species
     if subspecies is not None:
         url = '/entrez/eutils/esearch.fcgi?db=nuccore&term={}+{}+{}+{}'.format(
@@ -324,8 +324,8 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
     # so must use exact match for longer words
     # Lists originally taken from http://www.genecards.org/ which has multiple sources including HUGO
     gene_synonym=None
-    if gene =="CO1":
-        gene_synonym = ["COX1", "COI", "COXI", "Cytochrome C Oxidase I",
+    if gene =="COX1":
+        gene_synonym = ["CO1", "COI", "COXI", "Cytochrome C Oxidase I",
         "Cytochrome C Oxidase Subunit I", "MTCO1",
         "Mitochondrially Encoded Cytochrome C Oxidase I",
         "Cytochrome C Oxidase Polypeptide I", "EC 1.9.3.1"]
@@ -620,10 +620,10 @@ if __name__ == '__main__':
         #sample_list = "Zaher1Sample.csv"
 
     try:
-        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'CO1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
+        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'COX1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
         #Check that genes are qualified geneList names, to avoid redundant DB entries
         for gene in geneList:
-            if gene.upper() == "CO1":
+            if gene.upper() == "COX1":
                 continue
             if gene.upper() == "ND2":
                 continue
@@ -636,11 +636,11 @@ if __name__ == '__main__':
             if gene.upper()=="CYTB":
                 continue
             else:
-                print "Please use one of the following gene names: ['CO1', 'CYTB' 'ND2','12S','16S','ND5']"
+                print "Please use one of the following gene names: ['COX1', 'CYTB' 'ND2','12S','16S','ND5']"
 
     except IndexError:
         print "Using default gene list"
-        geneList = ['CO1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
+        geneList = ['COX1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
 
 
 

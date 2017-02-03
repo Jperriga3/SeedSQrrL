@@ -242,11 +242,11 @@ if __name__ == '__main__':
     	sample_list = "SampleList.csv"
 
     try:
-        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'CO1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
+        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'COX1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
         #populateRelatives = sys.argv[3]
         # Check that genes are qualified geneList names, to avoid redundant DB entries
         for gene in geneList:
-            if gene.upper() == "CO1":
+            if gene.upper() == "COX1":
                 continue
             if gene.upper() == "ND2":
                 continue
@@ -261,11 +261,11 @@ if __name__ == '__main__':
             # if gene.upper()=="";
             #	continue
             else:
-                print "Please use one of the following gene names: ['CO1', 'ND2','12S','16S','ND5']"
+                print "Please use one of the following gene names: ['COX1', 'ND2','12S','16S','ND5']"
 
     except IndexError:
         print "Using default gene list and no relative population in database"
-        geneList = ['CO1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
+        geneList = ['COX1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
         #populateRelatives = "No"
 
 
