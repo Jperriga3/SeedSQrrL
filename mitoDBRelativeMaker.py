@@ -133,11 +133,13 @@ def get_gene_from_xml(fasta_soup, gene, db_connection):  # fasta_Soup is an obje
     # so must use exact match for longer words
     # Lists originally taken from http://www.genecards.org/ which has multiple sources including HUGO
     gene_synonym = None
+
     if gene == "COX1":
         gene_synonym = ["CO1", "COI", "COXI", "Cytochrome C Oxidase I",
                         "Cytochrome C Oxidase Subunit I", "MTCO1",
                         "Mitochondrially Encoded Cytochrome C Oxidase I",
                         "Cytochrome C Oxidase Polypeptide I", "EC 1.9.3.1"]
+
     if gene == "CYTB":
         gene_synonym = ["COB", "Cytochrome B", "cyt b",
                         "Mitochondrially Encoded Cytochrome B", "Complex III Subunit 3",

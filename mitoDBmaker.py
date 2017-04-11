@@ -322,12 +322,14 @@ def get_gene_from_xml(fasta_soup, subspecies, gene,
     # matching ratio is too high when comparing "NADH 1" and "NADH 2",
     # so must use exact match for longer words
     # Lists originally taken from http://www.genecards.org/ which has multiple sources including HUGO
+
     gene_synonym = None
     if gene == "COX1":
         gene_synonym = ["CO1", "COI", "COXI", "Cytochrome C Oxidase I",
                         "Cytochrome C Oxidase Subunit I", "MTCO1",
                         "Mitochondrially Encoded Cytochrome C Oxidase I",
                         "Cytochrome C Oxidase Polypeptide I", "EC 1.9.3.1"]
+
     if gene == "CYTB":
         gene_synonym = ["COB", "Cytochrome B", "cyt b",
                         "Mitochondrially Encoded Cytochrome B", "Complex III Subunit 3",
@@ -619,7 +621,9 @@ if __name__ == '__main__':
 
     try:
         geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'COX1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
-        # Check that genes are qualified geneList names, to avoid redundant DB entries
+
+        #Check that genes are qualified geneList names, to avoid redundant DB entries
+
         for gene in geneList:
             if gene.upper() == "COX1":
                 continue

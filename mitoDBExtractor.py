@@ -252,8 +252,10 @@ if __name__ == '__main__':
         print "Gene seeds will be contained in the same file."
 
     try:
+
         geneList = literal_eval(sys.argv[3])  # i.e. geneList=[\'COX1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
         # populateRelatives = sys.argv[3]
+
         # Check that genes are qualified geneList names, to avoid redundant DB entries
         for gene in geneList:
             if gene.upper() == "COX1":
@@ -276,7 +278,9 @@ if __name__ == '__main__':
     except IndexError:
         print "Using default gene list and no relative population in database"
         geneList = ['COX1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
-        # populateRelatives = "No"
+
+        #populateRelatives = "No"
+
 
     with open(sample_list, 'r') as sample:
         lines = sample.readlines()
