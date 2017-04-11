@@ -36,7 +36,8 @@ def checkSynonyms(genus, species):
     if fetched is not None:  # not a synonym
         genus, species = str(fetched["Synonym"]).split()
         trans_genus, trans_species = str(fetched["ReferenceName"]).split()
-        print str(genus) + " translated to " + str(trans_genus) + " and " + str(species) + " translated to " + str(trans_species)
+        print str(genus) + " translated to " + str(trans_genus) + " and " + str(species) + " translated to " + str(
+            trans_species)
 
         # trans_genus=trans_genus.replace("u'", "")
 
@@ -69,11 +70,10 @@ def get_taxonomy(genus, species):  # different return than DBMaker, uses dict; r
     response = get_response(url)
     rData = response.read()
     id_soup = BeautifulSoup(rData, 'xml')
-	 
+
     if id_soup is None:
         print "No taxonomy xml returned"
         return
-
 
     if id_soup.eSearchResult is None or id_soup.eSearchResult.IdList.Id is None:
         print "No id in taxonomy xml for: " + str(genus) + " " + str(species)
@@ -170,7 +170,7 @@ def get_taxonomy(genus, species):  # different return than DBMaker, uses dict; r
             # AllOtherRank += [str(taxa.ScientificName.string)]
 
             # if rank.string=="no rank" and taxa.ScientificName.string=="Cetartiodactyla":
-            #	order = "Cetartiodactyla"
+            #    order = "Cetartiodactyla"
 
     return OrderedDict([
         ("Subfamily", Subfamily),
@@ -207,7 +207,7 @@ def checkDb(rank, rankValue, geneList):
         results = cur.fetchone()
 
         if results is not None:  # returns one row, assumes cellCount=24 but this will change if attributes change
-            #print "fetching results for " + str(results["Genus"]) + " " + str(results["Species"]) + "for gene " + gene
+            # print "fetching results for " + str(results["Genus"]) + " " + str(results["Species"]) + "for gene " + gene
 
             sequence = str(results["GeneSequence"])
             acc_num = str(results["AccessionNumber"])
@@ -218,35 +218,45 @@ def checkDb(rank, rankValue, geneList):
                 partial_or_complete = "complete"
             if partial_flag == "1":
                 partial_or_complete = "partial"
-            #print "fasta-ing"
+            # print "fasta-ing"
             header = ">" + gene + '_' + genus_used + '_' + species_used + '_' + acc_num + '_' + rank + '_' + \
                      rankValue + '_' + partial_or_complete
             fasta += header + "\n" + sequence + "\n"
 
         else:  # e.g., no gene present for organism of the given rank
             missing_gene_list += [gene]  # still missing, keep in list
-            #print "making the missing"
-    #print "geneList is " + str(geneList) + "and missing_gene_list is " + str(missing_gene_list)
+            # print "making the missing"
+    # print "geneList is " + str(geneList) + "and missing_gene_list is " + str(missing_gene_list)
     return missing_gene_list, fasta
 
 
 if __name__ == '__main__':
-
+    single_seed = "n"
+    i = 0
     try:
         sample_list = sys.argv[1]  # raw data list from Alan's lab [id, family, genus, species]
+
 
     except IndexError:
         # print "please specify a filename"
         print "using default filename"
-    	#sample_list = "Zaher18Samples.csv"
-    	sample_list = "SampleList.csv"
+        # sample_list = "Zaher18Samples.csv"
+        sample_list = "SampleList.csv"
 
     try:
-        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'CO1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
-        #populateRelatives = sys.argv[3]
+        single_seed = sys.argv[2]
+        if single_seed == "y" or single_seed == "Y":
+            single_seed = "y"
+
+    except IndexError:
+        print "Gene seeds will be contained in the same file."
+
+    try:
+        geneList = literal_eval(sys.argv[3])  # i.e. geneList=[\'COX1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
+        # populateRelatives = sys.argv[3]
         # Check that genes are qualified geneList names, to avoid redundant DB entries
         for gene in geneList:
-            if gene.upper() == "CO1":
+            if gene.upper() == "COX1":
                 continue
             if gene.upper() == "ND2":
                 continue
@@ -259,17 +269,14 @@ if __name__ == '__main__':
             if gene.upper() == "CYTB":
                 continue
             # if gene.upper()=="";
-            #	continue
+            #    continue
             else:
-                print "Please use one of the following gene names: ['CO1', 'ND2','12S','16S','ND5']"
+                print "Please use one of the following gene names: ['COX1', 'ND2','12S','16S','ND5']"
 
     except IndexError:
         print "Using default gene list and no relative population in database"
-        geneList = ['CO1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
-        #populateRelatives = "No"
-
-
-
+        geneList = ['COX1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
+        # populateRelatives = "No"
 
     with open(sample_list, 'r') as sample:
         lines = sample.readlines()
@@ -288,7 +295,6 @@ if __name__ == '__main__':
             trans_species = None
             fasta = ""
             missing_gene_list = list(geneList)  # LISTS ARE MUTABLE
-
 
             ##### Look for same subspecies in sqlite first????###
             if species != "sp.":
@@ -319,7 +325,7 @@ if __name__ == '__main__':
                 if fasta_lines is not None:
                     fasta += fasta_lines  # Two lines appended, a header and a gene sequence (may be None)
                     # else:
-                    #	giIDs, transRankValue =  mitoDBRelativeMaker.get_ids(rankValue, gene)
+                    #    giIDs, transRankValue =  mitoDBRelativeMaker.get_ids(rankValue, gene)
 
             if len(missing_gene_list) != 0:  # No genus present, search for full taxonomy
                 # If genes remain to be found, find taxonomy and use relative for those genes
@@ -342,13 +348,14 @@ if __name__ == '__main__':
                                 print "family found"
                 temp_taxonomy = taxonomy = OrderedDict([("Family", family)])
 
-                #print temp_taxonomy
+                # print temp_taxonomy
                 for rank, rankValue in temp_taxonomy.items():
 
                     if rankValue is None:
                         continue
                     else:
-                        print "iteration: " + str(rank) + " " + str(rankValue) + " " + str(missing_gene_list[0]) + " for " + str(genus) + " " + str(species)
+                        print "iteration: " + str(rank) + " " + str(rankValue) + " " + str(
+                            missing_gene_list[0]) + " for " + str(genus) + " " + str(species)
                         missing_gene_list, fasta_lines = checkDb(rank, rankValue, missing_gene_list)
                         if fasta_lines is not None:
                             fasta += fasta_lines  # Two lines appended, a header and a gene sequence (may be None)
@@ -358,15 +365,23 @@ if __name__ == '__main__':
                             # line of info followed by line of sequence
                             # filePrefix = genus + '_' + species #Want to use id instead
                             # f_out= open(filePrefix + ".seeds", 'w')
-                            f_out = open("./seeds/" + id + ".seeds", 'w')
+                            if single_seed == "y":
+                                f_out = open("./seeds/" + id + "_" + str(i) + ".seeds", 'w')
+                                i = i + 1
+                            else:
+                                f_out = open("./seeds/" + id + ".seeds", 'w')
                             f_out.write(fasta)
                             f_out.close()
                             break
 
             else:  # missing_gene_list is None, species or Genus was present
-                #print "writing to file"
+                # print "writing to file"
                 # filePrefix = genus + '_' + species
-                f_out = open("./seeds/" + id + ".seeds", 'w')
+                if single_seed == "y":
+                    f_out = open("./seeds/" + id + "_" + str(i) + ".seeds", 'w')
+                    i = i + 1
+                else:
+                    f_out = open("./seeds/" + id + ".seeds", 'w')
                 f_out.write(fasta)
                 f_out.close()
                 #### NOTE: Still need to add an optional check to NCBI when not found in database ####

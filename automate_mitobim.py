@@ -30,6 +30,7 @@ def mitobim_notebook(seed_file):
 
     try:
         sample_dir = glob.glob('RawReads*/*{}'.format(sample))[0]
+
     except IndexError:
         print('No sample dir found for {}'.format(sample))
         return
@@ -140,7 +141,7 @@ def flash_merge(sample):
 def run_mitobim(sample):
     os.chdir(os.path.join(sample, '4-MITObim'))
     with open('MITObim.log', 'w') as err_fh:
-        subprocess.check_call(['MITObim_1.8.pl', '--quick', '../1-raw/seed.fasta', '-readpool',
+        subprocess.check_call(['mitobim.pl', '--quick', '../1-raw/seed.fasta', '-readpool',
                                '../3-read-merging/out.extendedFrags.fastq.gz', '-sample', 'sample',
                                '-ref', 'seed', '-end', '50', '-kbait', '15', '--clean'],
                               stderr=err_fh)
@@ -158,6 +159,7 @@ def run_mitobim(sample):
 
 def human_sorted(l):
     """ Sort the given iterable in the way that humans expect."""
+
     def convert(text):
         return int(text) if text.isdigit() else text
 
@@ -227,7 +229,9 @@ def rename_contigs(contigsfile, seedfile):
     out_lines = []
     for seed_name, contig_name, contig in zip(seed_names, contig_lines[0::2],
                                               contig_lines[1::2]):
-        assert(seed_name.split()[0] in contig_name)
+        print "SEED_NAME IS " + str(seed_name)
+        print "CONTIG_NAME IS" + str(contig_name)
+        assert (seed_name.split()[0] in contig_name)
         out_lines += [seed_name.replace('\n', '_mitobim_assembly\n'), contig]
     with open(contigsfile, mode='w') as contig_fh:
         contig_fh.writelines(out_lines)
@@ -238,10 +242,11 @@ def split_seeds(seed_file):
         lines = fh.readlines()
     for seed_name, seed_seq in zip(lines[0::2], lines[1::2]):
         gene_name = seed_name.split('_')[0].replace('>', '')
-        new_file = seed_file.replace('.seeds', gene_name+'.seeds')
+        new_file = seed_file.replace('.seeds', gene_name + '.seeds')
         with open(new_file, 'w') as fh:
             fh.writelines([seed_name, seed_seq])
-    shutil.move(seed_file, seed_file+'.bak')
+    shutil.move(seed_file, seed_file + '.bak')
+
 
 if __name__ == '__main__':
     all_seeds = glob.glob('seeds/*.seeds')

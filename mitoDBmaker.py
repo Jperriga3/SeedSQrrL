@@ -1,6 +1,6 @@
 # MitoDBmaker.py
 
-'''	
+'''
 main()
     Reads in each line of a file containing id,family,genus,species,subspecies with no spaces.
     It is recommended the list be aready ordered by family, genus, then species (checks for redundancy).
@@ -38,6 +38,7 @@ import urllib
 import string  # for string.replace in filename
 import time
 import sys
+
 # import re  # for regular expressions
 
 lastRequestTime = 0
@@ -48,19 +49,19 @@ def get_ids(genus, species, subspecies, gene_or_genome):
     #############################################################
     # get the GenBank accession number via esearch, ex 256557273
     #############################################################
-    # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=Atractaspis+bibronii+CO1
+    # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=Atractaspis+bibronii+COX1
     # Note: check that if subspecies isn't found, still finds species
     if subspecies is not None:
         url = '/entrez/eutils/esearch.fcgi?db=nuccore&term={}+{}+{}+{}'.format(
-            urllib.quote(genus), urllib.quote(species), urllib.quote(subspecies),  
+            urllib.quote(genus), urllib.quote(species), urllib.quote(subspecies),
             urllib.quote(gene_or_genome))
     else:
         url = '/entrez/eutils/esearch.fcgi?db=nuccore&term={}+{}+{}'.format(
             urllib.quote(genus), urllib.quote(species), urllib.quote(gene_or_genome))
 
-    time_since_last_request = time.time()-lastRequestTime
-    if time_since_last_request<0.3:
-        time.sleep(0.3-time_since_last_request)
+    time_since_last_request = time.time() - lastRequestTime
+    if time_since_last_request < 0.3:
+        time.sleep(0.3 - time_since_last_request)
     response = get_response(url)
     lastRequestTime = time.time()
 
@@ -108,7 +109,7 @@ def get_ids(genus, species, subspecies, gene_or_genome):
 def report_synonym(genus, species, trans_genus, trans_species, db_connection):
     con = db_connection
     cur = con.cursor()
-
+    print "synonyms reported"
     organism = str(genus + " " + species)
     trans_organism = str(trans_genus + " " + trans_species)
 
@@ -118,7 +119,7 @@ def report_synonym(genus, species, trans_genus, trans_species, db_connection):
     if rowcount < 0:
         print "invalid rowcount returned from database"
     # if rowcount == 1, Entry exists, but do not want to update Synonyms without updating RefGenes first
-    if rowcount == 0: # insert
+    if rowcount == 0:  # insert
         insert = 'INSERT INTO Synonyms (Synonym,ReferenceName) VALUES (?,?)'
         cur.execute(insert, (organism, trans_organism))
     con.commit()
@@ -148,10 +149,9 @@ def get_full_taxonomy(genus, species):
     # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=taxonomy&term=Hypsiglena+slevini
     url = '/entrez/eutils/esearch.fcgi?db=taxonomy&term=' + genus + '+' + species
 
-
-    time_since_last_request = time.time()-lastRequestTime
-    if time_since_last_request<0.3:
-        time.sleep(0.3-time_since_last_request)
+    time_since_last_request = time.time() - lastRequestTime
+    if time_since_last_request < 0.3:
+        time.sleep(0.3 - time_since_last_request)
     response = get_response(url)
     lastRequestTime = time.time()
 
@@ -160,11 +160,11 @@ def get_full_taxonomy(genus, species):
 
     if id_soup is None:
         print "No taxonomy xml returned"
-        return
+        return [None] * 15
 
     if id_soup.eSearchResult.IdList.Id is None:
         print "No id in taxonomy xml for: " + str(genus) + " " + str(species)
-        return
+        return [None] * 15
 
     id = id_soup.eSearchResult.IdList.Id.string
 
@@ -173,15 +173,14 @@ def get_full_taxonomy(genus, species):
     #####################################################
     # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&id=509078&retmode=xml
     url = '/entrez/eutils/efetch.fcgi?db=taxonomy&id=' + id + '&retmode=xml'
-    time_since_last_request = time.time()-lastRequestTime
+    time_since_last_request = time.time() - lastRequestTime
     if time_since_last_request < 0.3:
-        time.sleep(0.3-time_since_last_request)
+        time.sleep(0.3 - time_since_last_request)
     response = get_response(url)
     lastRequestTime = time.time()
 
     r_data = response.read()
     fastaSoup = BeautifulSoup(r_data, 'xml')
-    
 
     ###################################################
     # check that the genus and species names are correct
@@ -195,27 +194,26 @@ def get_full_taxonomy(genus, species):
     taxon = fastaSoup.find_all("Taxon")
 
     if org_name[0] != genus:
-            correct_organism = False
-            synonyms = taxon[0].find_all("Synonym")
-            synonyms += taxon[0].find_all("GenbankSynonym")
+        correct_organism = False
+        synonyms = taxon[0].find_all("Synonym")
+        synonyms += taxon[0].find_all("GenbankSynonym")
 
-            for synonym in synonyms:
-                if synonym is None or synonym.string is None:
-                    continue
-                if len(org_name)<2:  # missing species name, genus only
-                    # check for synonym
-                    if genus in synonym.string:
-                        correct_organism = True
-                        break
-                else:
-                    scientific_name = genus + " " + species
-                    if scientific_name in synonym.string:
-                        correct_organism = True
-                        break
-            if correct_organism == False:
-                print "synonym not found for " + str(genus) + " " + str(species)
-                return
-
+        for synonym in synonyms:
+            if synonym is None or synonym.string is None:
+                continue
+            if len(org_name) < 2:  # missing species name, genus only
+                # check for synonym
+                if genus in synonym.string:
+                    correct_organism = True
+                    break
+            else:
+                scientific_name = genus + " " + species
+                if scientific_name in synonym.string:
+                    correct_organism = True
+                    break
+        if correct_organism == False:
+            print "synonym not found for " + str(genus) + " " + str(species)
+            return [None] * 15
 
     ###############################################
     # Get the lineage
@@ -263,7 +261,7 @@ def get_full_taxonomy(genus, species):
             print "unknown rank " + str(rank.string) + " " + str(taxa.ScientificName.string)
             AllOtherRank += [str(taxa.ScientificName.string)]
 
-        # if rank.string=="no rank" and taxa.ScientificName.string=="Cetartiodactyla":
+            # if rank.string=="no rank" and taxa.ScientificName.string=="Cetartiodactyla":
             # order = "Cetartiodactyla"
 
     return str(AllOtherRank), Superkingdom, Kingdom, Superphylum, Phylum, Subphylum, Class, Superorder, Order, \
@@ -280,11 +278,11 @@ def getXML(genus, species, gene_or_genome, giID):
     # http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=189164442&retmode=xml
     url = '/entrez/eutils/efetch.fcgi?db=nuccore&id=' + giID + '&retmode=xml'
 
-    time_since_last_request = time.time()-lastRequestTime
-    if time_since_last_request<0.3:
-        time.sleep(0.3-time_since_last_request)
+    time_since_last_request = time.time() - lastRequestTime
+    if time_since_last_request < 0.3:
+        time.sleep(0.3 - time_since_last_request)
     response = get_response(url)  # get_full_taxonomy
-    lastRequestTime=time.time()
+    lastRequestTime = time.time()
 
     r_data = response.read()
 
@@ -292,14 +290,14 @@ def getXML(genus, species, gene_or_genome, giID):
     # NOTE: BeautifulSoup does not allow you to parse dashes in xml names
 
     # check that genus and species name are correct
-    org_list = fasta_soup.find("GBSeq_organism") #start value in list format
+    org_list = fasta_soup.find("GBSeq_organism")  # start value in list format
     # print "full organism name is " + str(org_list)
     organism = org_list.contents[0]  # Genus species
     org_name = str(organism).split()
 
     if genus != org_name[0] or species != org_name[1]:
         ##### check first two words of organism in case there is a subspecies listed ####
-        print '##### Incorrect organism ' + str(organism) + ' for ' + str(genus) + ' ' + str(species) + ' ' +\
+        print '##### Incorrect organism ' + str(organism) + ' for ' + str(genus) + ' ' + str(species) + ' ' + \
               str(gene_or_genome)
         return None, None  # means it failed
 
@@ -310,50 +308,51 @@ def getXML(genus, species, gene_or_genome, giID):
         if geneLocus.startswith('NC') is False:  # not a chromosome from RefSeq, could also start with EU?
             return None, None
 
-    if len(org_name)>2:
+    if len(org_name) > 2:
         print "############### subspecies is " + str(org_name[2]) + " for " + str(genus) + " " + str(species)
         subspecies = str(org_name[2])
 
     return fasta_soup, subspecies
 
 
-def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Soup is an object that contins the XML with the gene
+def get_gene_from_xml(fasta_soup, subspecies, gene,
+                      db_connection):  # fasta_Soup is an object that contins the XML with the gene
 
     # check for synonyms
     # matching ratio is too high when comparing "NADH 1" and "NADH 2",
     # so must use exact match for longer words
     # Lists originally taken from http://www.genecards.org/ which has multiple sources including HUGO
-    gene_synonym=None
-    if gene =="CO1":
-        gene_synonym = ["COX1", "COI", "COXI", "Cytochrome C Oxidase I",
-        "Cytochrome C Oxidase Subunit I", "MTCO1",
-        "Mitochondrially Encoded Cytochrome C Oxidase I",
-        "Cytochrome C Oxidase Polypeptide I", "EC 1.9.3.1"]
+    gene_synonym = None
+    if gene == "COX1":
+        gene_synonym = ["CO1", "COI", "COXI", "Cytochrome C Oxidase I",
+                        "Cytochrome C Oxidase Subunit I", "MTCO1",
+                        "Mitochondrially Encoded Cytochrome C Oxidase I",
+                        "Cytochrome C Oxidase Polypeptide I", "EC 1.9.3.1"]
     if gene == "CYTB":
-        gene_synonym = ["COB", "Cytochrome B",  "cyt b",
-        "Mitochondrially Encoded Cytochrome B", "Complex III Subunit 3",
-        "Complex III Subunit III", "Cytochrome B-C1 Complex Subunit 3",
-        "Ubiquinol-Cytochrome-C Reductase Complex Cytochrome B Subunit", "MTCYB"]
+        gene_synonym = ["COB", "Cytochrome B", "cyt b",
+                        "Mitochondrially Encoded Cytochrome B", "Complex III Subunit 3",
+                        "Complex III Subunit III", "Cytochrome B-C1 Complex Subunit 3",
+                        "Ubiquinol-Cytochrome-C Reductase Complex Cytochrome B Subunit", "MTCYB"]
     if gene == "ND2":
         # must search for exact match here, seqMatcher will match "NADH" with "NADH2"
         gene_synonym = ["NADH2", "NADH Dehydrogenase 2", "NADH Dehydrogenase Subunit 2",
-        "Complex I ND2 Subunit", "NADH-Ubiquinone Oxidoreductase Chain 2", "MTND2",
-        "Mitochondrially Encoded NADH Dehydrogenase 2", "EC 1.6.5.3"]
-    if gene =="12S":  # "12S rRNA gene" AND "12S ribosomal RNA" should be captured by 12S alone
-        gene_synonym = ["12S RNA", "s-rRNA", "Mitochondrially Encoded 12S RNA", "MTRNR1", "RNR1"] #short
+                        "Complex I ND2 Subunit", "NADH-Ubiquinone Oxidoreductase Chain 2", "MTND2",
+                        "Mitochondrially Encoded NADH Dehydrogenase 2", "EC 1.6.5.3"]
+    if gene == "12S":  # "12S rRNA gene" AND "12S ribosomal RNA" should be captured by 12S alone
+        gene_synonym = ["12S RNA", "s-rRNA", "Mitochondrially Encoded 12S RNA", "MTRNR1", "RNR1"]  # short
         # note: gene for 12S is MT-RNR1 in animals
-    if gene =="16S":
-        gene_synonym = ["l-rRNA", "Mitochondrially Encoded 16S RNA","MTRNR2", "RNR2",
-        "Humanin Mitochondrial", "Formyl-Humanin", "Humanin", "HNM", "HN"]
-    #if gene == "trnV":
+    if gene == "16S":
+        gene_synonym = ["l-rRNA", "Mitochondrially Encoded 16S RNA", "MTRNR2", "RNR2",
+                        "Humanin Mitochondrial", "Formyl-Humanin", "Humanin", "HNM", "HN"]
+    # if gene == "trnV":
     #    gene_synonym = ["tRNA-Val","TRNA Valine","Mitochondrially Encoded TRNA Valine", "MTTV"]
     #    # Note: TRNA is a known synonym but there are other types of TRNA. Check for this!!!
     if gene == "ND5":
         gene_synonym = ["Mitochondrially Encoded NADH:Ubiquinone Oxidoreductase Core Subunit 5",
-        "NADH Dehydrogenase Subunit 5","EC 1.6.5.3", "MTND5", 
-        "Mitochondrially Encoded NADH Dehydrogenase 5", 
-        "NADH Dehydrogenase, Subunit 5 (Complex I)", "NADH-Ubiquinone Oxidoreductase Chain 5",
-        "Complex I ND5 Subunit","NADH Dehydrogenase 5","NADH5"]
+                        "NADH Dehydrogenase Subunit 5", "EC 1.6.5.3", "MTND5",
+                        "Mitochondrially Encoded NADH Dehydrogenase 5",
+                        "NADH Dehydrogenase, Subunit 5 (Complex I)", "NADH-Ubiquinone Oxidoreductase Chain 5",
+                        "Complex I ND5 Subunit", "NADH Dehydrogenase 5", "NADH5"]
 
     gene_loc = fasta_soup.find("GBSeq_locus")
     gene_locus = gene_loc.contents[0]
@@ -380,10 +379,10 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
         for qualifier in qualifiers:
             if qualifier.GBQualifier_value is None:
                 continue
-            value= qualifier.GBQualifier_value.string
+            value = qualifier.GBQualifier_value.string
 
             # Check entire value for a match before individual words
-            if value.upper()==gene.upper():
+            if value.upper() == gene.upper():
                 best_match = 1.0
                 best_feature = feat
                 best_word = value
@@ -391,11 +390,11 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
             if gene_synonym is not None:  # look for exact match of synonym
                 for syn in gene_synonym:
                     if value.upper() == syn.upper():
-                            best_match = 1.0
-                            best_feature = feat
-                            best_word = value
-                            # print "##### gene synonym match ####" + str(syn)
-                            break  # want to break out of outer loop, make function?
+                        best_match = 1.0
+                        best_feature = feat
+                        best_word = value
+                        # print "##### gene synonym match ####" + str(syn)
+                        break  # want to break out of outer loop, make function?
 
             # for each word in value
             # check the matching ratio
@@ -405,12 +404,12 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
             # if no exact match, check individual words
             for word in words:
                 s = SequenceMatcher(None, word.upper(), gene.upper())
-                matchRatio=s.ratio()  # 0 is no match, 1 is perfect match
+                matchRatio = s.ratio()  # 0 is no match, 1 is perfect match
                 # if ratio is better that best match, save as best_feature and make new best_match score
-                if matchRatio>best_match:
-                    best_match=matchRatio
-                    best_feature=feat
-                    best_word=word
+                if matchRatio > best_match:
+                    best_match = matchRatio
+                    best_feature = feat
+                    best_word = word
 
     if best_feature is None:
         print str(gene) + " not found in XML file for " + genus + " " + species
@@ -441,15 +440,15 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
     is_complement = False
 
     if "complement" in start:  # check for complement() and remove
-        start=start.strip("complement(")
-        stop=stop.strip(")")
-        is_complement=True
+        start = start.strip("complement(")
+        stop = stop.strip(")")
+        is_complement = True
 
     if "<" in start or ">" in stop:  # check for &lt, &gt which indicates partial, and remove
         partial = True
         # insert partial into database
-        start=start.strip("<")
-        stop=stop.strip(">")
+        start = start.strip("<")
+        stop = stop.strip(">")
 
     start = int(start) - 1  # NCBI uses 1 for first item, python requires zero
     stop = int(stop)
@@ -461,7 +460,6 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
     if is_complement:
         translated_sequence = string.translate(str(sequence), translation_table)  # take complement
         sequence = translated_sequence[::-1]  # reverse order
-
 
     # Save whether it is a gene or cds, rna, etc
     feature_type = best_feature.GBFeature_key.string
@@ -522,7 +520,7 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
         CONSTRAINT "NonDuplication" UNIQUE ("Genus", "Species", "GeneName", "AccessionNumber") ON CONFLICT ABORT
         );'''
         cur.execute(sql_command)
-        
+
         sql_command = '''CREATE TABLE "Synonyms" (
         "Synonym" TEXT PRIMARY KEY ON CONFLICT ABORT UNIQUE ON CONFLICT ABORT NOT NULL ON CONFLICT ABORT,
         "ReferenceName" TEXT NOT NULL ON CONFLICT ABORT
@@ -534,7 +532,7 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
     if rowcount < 0:
         print "invalid rowcount"
 
-    if rowcount>0:  # update
+    if rowcount > 0:  # update
         # print "updating table for " + str(organism) + ' ' + str(gene)
         AllOtherRank, Superkingdom, Kingdom, Superphylum, Phylum, Subphylum, Class, Superorder, Order, Suborder, \
         Infraorder, Parvorder, Superfamily, Family, Subfamily = get_full_taxonomy(genus, species)
@@ -549,7 +547,7 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
             '''
 
         cur.execute(update, (AllOtherRank, Superkingdom, Kingdom, Superphylum, Phylum, Subphylum, Class, Superorder,
-                             Order,Suborder, Infraorder, Parvorder, Superfamily, Family, Subfamily, genus, species,
+                             Order, Suborder, Infraorder, Parvorder, Superfamily, Family, Subfamily, genus, species,
                              subspecies, gene, feature_type, gene_locus, int(partial), sequence, genus, species, gene,
                              gene_locus, sequence))
 
@@ -562,7 +560,7 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
                  'Species, subspecies, GeneName, GeneType, AccessionNumber, PartialFLag, GeneSequence) ' \
                  'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
         cur.execute(insert, (AllOtherRank, Superkingdom, Kingdom, Superphylum, Phylum, Subphylum, Class, Superorder,
-                             Order,Suborder,Infraorder,Parvorder,Superfamily,Family,Subfamily, genus, species,
+                             Order, Suborder, Infraorder, Parvorder, Superfamily, Family, Subfamily, genus, species,
                              subspecies, gene, feature_type, gene_locus, int(partial), sequence))
 
     con.commit()
@@ -572,7 +570,7 @@ def get_gene_from_xml(fasta_soup, subspecies, gene, db_connection):  # fasta_Sou
 
 def get_response(url):
     _server = 'eutils.ncbi.nlm.nih.gov'
-    conn = httplib.HTTPSConnection(_server) 	# Setup HTTP session with the server
+    conn = httplib.HTTPSConnection(_server)  # Setup HTTP session with the server
     conn.request('GET', url)  # get a connection
     response = conn.getresponse()
 
@@ -602,7 +600,7 @@ def get_response(url):
 if __name__ == '__main__':
 
     #######################################
-    #read in list of Genus species names
+    # read in list of Genus species names
     #######################################
     # Get the genus and species name from comma delimited file (e.x. ZaherRaw.csv)
 
@@ -612,37 +610,35 @@ if __name__ == '__main__':
     except IndexError:
         # print "please specify a filename"
         print "Using Default Filename"
-        #sample_list = "Zaher18Samples.csv"
-        sample_list = "Zaher1Sample.csv"
+        # sample_list = "SampleList.csv"
+        sample_list = "SampleList.csv"
 
 
 
-        #sample_list = "Zaher1Sample.csv"
+        # sample_list = "Zaher1Sample.csv"
 
     try:
-        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'CO1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
-        #Check that genes are qualified geneList names, to avoid redundant DB entries
+        geneList = literal_eval(sys.argv[2])  # i.e. geneList=[\'COX1\', \'ND2\',\'12S\',\'16S\',\'ND5\']
+        # Check that genes are qualified geneList names, to avoid redundant DB entries
         for gene in geneList:
-            if gene.upper() == "CO1":
+            if gene.upper() == "COX1":
                 continue
             if gene.upper() == "ND2":
                 continue
             if gene.upper() == "12S":
                 continue
-            if gene.upper()== "16S":
+            if gene.upper() == "16S":
                 continue
-            if gene.upper()=="ND5":
+            if gene.upper() == "ND5":
                 continue
-            if gene.upper()=="CYTB":
+            if gene.upper() == "CYTB":
                 continue
             else:
-                print "Please use one of the following gene names: ['CO1', 'CYTB' 'ND2','12S','16S','ND5']"
+                print "Please use one of the following gene names: ['COX1', 'CYTB' 'ND2','12S','16S','ND5']"
 
     except IndexError:
         print "Using default gene list"
-        geneList = ['CO1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
-
-
+        geneList = ['COX1', 'CYTB', 'ND2', '12S', '16S', 'ND5']
 
     old_genus = None
     old_species = None
@@ -653,33 +649,32 @@ if __name__ == '__main__':
         for line in lines:
             line = line.replace('\n', '')
             cells = line.split(',')
-            ID=cells[0]
+            ID = cells[0]
             family = cells[1]
             genus = cells[2]
             species = cells[3]
-
             try:
                 subspecies = cells[4]
             except:
                 subspecies = None
 
             outFileName = string.replace(sample_list, ".csv", "NeedReference.csv")
-            fout = open(outFileName,'a') # a for append
+            fout = open(outFileName, 'a')  # a for append
 
             if species == "" or species == "sp.":
                 print "No species, writing to file"
                 for gene in geneList:
-                    fout.write(str(gene) + ',' + str(line))
+                    fout.write(str(gene) + ',' + str(line) + ',')
                 continue
 
             # Redundancy check: the genus,in case same species as the previous line
             if genus == old_genus and species == old_species:
                 # print "redundancy"
                 continue
-                
+
             dbConnection = sqlite3.connect('./mitoDB.sqlite')
 
-            genome='mitochondrion, complete genome'
+            genome = 'mitochondrion, complete genome'
             giIDs, trans_genus, trans_species = get_ids(genus, species, subspecies, genome)
             # get_ids checks for translated names (synonyms)
             print "transgenus and transspecies are " + str(trans_genus) + " " + str(trans_species)
@@ -697,7 +692,8 @@ if __name__ == '__main__':
                 # Subspecies is whatever is listed in the database, may be different from the subspecies given in the sample list
                 xml, Subspecies = getXML(genus, species, genome, giID)  # try getting XML for complete genome
 
-            else:  # No id was returned for the genome, can't retrieve xml
+            else:
+                # print " No id was returned for the genome, can't retrieve xml"
                 xml = None
 
             entry = None  # "successful" if a sequence is entered into the Database
@@ -710,9 +706,10 @@ if __name__ == '__main__':
                     if entry is None:  # gene name doesn't match or gene location not given in xml
                         # shouldn't happen unless missing a synonym
                         print str(gene) + " not found in genome of " + str(genus) + ' ' + str(species)
-                        fout.write(str(gene) + ',' + str(line))
+                        fout.write(str(gene) + ',' + str(line) + ',')
 
-            else:  # Genome not present
+            else:
+                # print " Genome not present"
                 for gene in geneList:  # get separate XML file for each gene
 
                     giIDs, trans_genus, trans_species = get_ids(genus, species, subspecies, gene)
@@ -729,10 +726,10 @@ if __name__ == '__main__':
                                 gene_entry = get_gene_from_xml(xml, Subspecies, gene, dbConnection)
 
                                 if gene_entry is not None:
-                                    break 	# successful entry, no need to check the next id
+                                    break  # successful entry, no need to check the next id
 
-                    if gene_entry is None:		# Most will end here, will search for genus-only in another program
-                        fout.write(str(gene) + ',' + str(line) + "\n")
+                    if gene_entry is None:  # Most will end here, will search for genus-only in another program
+                        fout.write(str(gene) + ',' + str(line) + ',' + "\n")
             old_genus = genus
             old_species = species
 
@@ -746,7 +743,7 @@ if __name__ == '__main__':
     # and insert it if one does not already exist
     # closestMatches can come from mitoRefmatcher.csv, but this only works for whole mtGenomes
 
-    #Ramphotyphlops,braminus error: 23 bindings supplied?
+    # Ramphotyphlops,braminus error: 23 bindings supplied?
 
     '''
     Zaher.csv changes: (checked synonyms against the reptile database at http://reptile-database.reptarium.cz/)
